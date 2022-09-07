@@ -13,7 +13,7 @@
 # define REG_S st.d
 # define FREG_L fld.d
 # define FREG_S fst.d
-#elif defined __loongarch32
+#elif defined __loongarch32r
 # define PTRLOG 2
 # define SZREG	4
 # define SZFREG	4
