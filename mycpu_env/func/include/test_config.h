@@ -21,7 +21,7 @@
 //NOP_INSERT: Insert 4 nop insts between every alu operation.
 //            Only set for exp7.
 //==================================================================
-#define NOP_INSERT 1
+#define NOP_INSERT 0
 
 #define TEST1 1
 #define TEST2 0
