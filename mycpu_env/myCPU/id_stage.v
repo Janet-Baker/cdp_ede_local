@@ -110,7 +110,7 @@ wire        rj_eq_rd;
 assign br_bus       = {br_taken,br_target};
 
 assign ds_to_es_bus = {alu_op      ,  //149:138
-                       load_op     ,  //137:137
+                       res_from_mem,  //137:137
                        src1_is_pc  ,  //136:136
                        src2_is_imm ,  //135:135
                        gr_we       ,  //134:134
