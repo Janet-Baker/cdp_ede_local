@@ -1,8 +1,8 @@
 module alu(
-  input  wire [11:0] alu_op,
-  input  wire [31:0] alu_src1,
-  input  wire [31:0] alu_src2,
-  output wire [31:0] alu_result
+  input  [11:0] alu_op,
+  input  [31:0] alu_src1,
+  input  [31:0] alu_src2,
+  output [31:0] alu_result
 );
 
 wire op_add;   //add operation
