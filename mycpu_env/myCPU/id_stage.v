@@ -132,6 +132,9 @@ always @(posedge clk) begin
     else if (es_allowin) begin
         ds_valid <= fs_to_ds_valid;
     end
+    if (br_taken) begin
+        ds_valid <= 1'b0;
+    end
 
     if (fs_to_ds_valid && ds_allowin) begin
         fs_to_ds_bus_r <= fs_to_ds_bus;
