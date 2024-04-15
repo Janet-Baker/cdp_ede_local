@@ -10,6 +10,8 @@ module wb_stage(
     input  [`MS_TO_WS_BUS_WD -1:0]  ms_to_ws_bus  ,
     //to rf: for write back
     output [`WS_TO_RF_BUS_WD -1:0]  ws_to_rf_bus  ,
+    //to ds: hazard
+    output [ 4:0] ws_dest                         ,
     //trace debug interface
     output [31:0] debug_wb_pc     ,
     output [ 3:0] debug_wb_rf_wen ,
@@ -22,11 +24,12 @@ wire        ws_ready_go;
 
 reg [`MS_TO_WS_BUS_WD -1:0] ms_to_ws_bus_r;
 wire        ws_gr_we;
+wire [ 4:0] ws_dest_r;
 wire [ 4:0] ws_dest;
 wire [31:0] ws_final_result;
 wire [31:0] ws_pc;
 assign {ws_gr_we       ,  //69:69
-        ws_dest        ,  //68:64
+        ws_dest_r      ,  //68:64
         ws_final_result,  //63:32
         ws_pc             //31:0
        } = ms_to_ws_bus_r;
@@ -38,7 +41,7 @@ assign ws_to_rf_bus = {rf_we   ,  //37:37
                        rf_waddr,  //36:32
                        rf_wdata   //31:0
                       };
-
+assign ws_dest = ws_valid? ws_dest_r: 5'bZZZZZ;
 assign ws_ready_go = 1'b1;
 assign ws_allowin  = !ws_valid || ws_ready_go;
 always @(posedge clk) begin

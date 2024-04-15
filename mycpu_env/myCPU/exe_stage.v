@@ -9,6 +9,8 @@ module exe_stage(
     //from ds
     input                          ds_to_es_valid,
     input  [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus  ,
+    //to ds: hazard
+    output [                  4:0] es_dest,
     //to ms
     output                         es_to_ms_valid,
     output [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus  ,
@@ -28,6 +30,7 @@ wire        es_src1_is_pc ;
 wire        es_src2_is_imm;
 wire        es_gr_we      ;
 wire        es_mem_we     ;
+wire [ 4:0] es_dest_r     ;
 wire [ 4:0] es_dest       ;
 wire [31:0] es_imm        ;
 wire [31:0] es_rj_value   ;
@@ -42,7 +45,7 @@ assign {es_alu_op      ,  //149:138
         es_src2_is_imm ,  //135:135
         es_gr_we       ,  //134:134
         es_mem_we      ,  //133:133
-        es_dest        ,  //132:128
+        es_dest_r      ,  //132:128
         es_imm         ,  //127:96
         es_rj_value    ,  //95 :64
         es_rkd_value   ,  //63 :32
@@ -61,6 +64,8 @@ assign es_to_ms_bus = {es_res_from_mem,  //70:70
                        es_alu_result  ,  //63:32
                        es_pc             //31:0
                       };
+
+assign es_dest = es_valid? es_dest_r : 5'bZZZZZ;
 
 // es_ready_go 数据始终是准备好的，1个周期肯定干完
 assign es_ready_go    = 1'b1;

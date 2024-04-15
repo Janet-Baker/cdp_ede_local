@@ -6,6 +6,12 @@ module id_stage(
     //allowin
     input                          es_allowin    ,
     output                         ds_allowin    ,
+    //from es
+    input  [                  4:0] es_dest       ,
+    //from ms
+    input  [                  4:0] ms_dest       ,
+    //from ws
+    input  [                  4:0] ws_dest       ,
     //from fs
     input                          fs_to_ds_valid,
     input  [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus  ,
@@ -35,6 +41,11 @@ assign {rf_we   ,  //37:37
         rf_waddr,  //36:32
         rf_wdata   //31:0
        } = ws_to_rf_bus;
+
+wire [ 4:0] es_dest;
+wire [ 4:0] ms_dest;
+wire [ 4:0] ws_dest;
+wire        is_hazard;
 
 wire        br_taken;
 wire [31:0] br_target;
@@ -122,18 +133,16 @@ assign ds_to_es_bus = {alu_op      ,  //149:138
                        ds_pc          //31 :0
                       };
 
-assign ds_ready_go    = 1'b1;
+// ds_ready_go 未发生hazard时为1，发生hazard时为0
+assign ds_ready_go    = (is_hazard === 1)? 1'b0 : 1'b1;
 assign ds_allowin     = !ds_valid || ds_ready_go && es_allowin;
 assign ds_to_es_valid = ds_valid && ds_ready_go;
 always @(posedge clk) begin
     if (reset) begin
         ds_valid <= 1'b0;
     end
-    else if (es_allowin) begin
+    else if (ds_allowin) begin
         ds_valid <= fs_to_ds_valid;
-    end
-    if (br_taken) begin
-        ds_valid <= 1'b0;
     end
 
     if (fs_to_ds_valid && ds_allowin) begin
@@ -203,6 +212,16 @@ assign need_si20  =  inst_lu12i_w;
 assign need_si26  =  inst_b | inst_bl;
 assign src2_is_4  =  inst_jirl | inst_bl;
 
+// inst_b => no hazard
+// inst_lu12i_w | inst_b | inst_bl => no rj
+// inst_add_w | inst_sub_w | inst_slt | inst_sltu | inst_and | inst_nor | inst_or | inst_xor => rk
+// inst_bne | inst_beq | inst_st_w => rd
+assign is_hazard = ((~(inst_lu12i_w | inst_b | inst_bl)) & 
+                    ((es_dest === rj) | (ms_dest === rj) | (ws_dest === rj) |
+                     ((inst_add_w | inst_sub_w | inst_slt | inst_sltu | inst_and | inst_nor | inst_or | inst_xor) &
+                        ((es_dest === rf_raddr2) | (ms_dest === rf_raddr2) | (ws_dest === rf_raddr2))
+                     )                     
+                    )) | ((inst_bne | inst_beq | inst_st_w) & ((es_dest === rd) | (ms_dest === rd) | (ws_dest === rd)));
 
 assign ds_imm = src2_is_4 ? 32'h4                      :
                 need_si20 ? {i20[19:0], 12'b0}         :
