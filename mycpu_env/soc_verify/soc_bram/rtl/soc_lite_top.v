@@ -54,7 +54,7 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //   > Date        : 2017-08-04
 //*************************************************************************
 
-`default_nettype none
+`default_nettype wire
 
 //for simulation:
 //1. if define SIMU_USE_PLL = 1, will use clk_pll to generate cpu_clk/timer_clk,
@@ -143,20 +143,20 @@ mycpu_top cpu(
     .resetn           (cpu_resetn),  //low active
 
     .inst_sram_en     (cpu_inst_en   ),
-    .inst_sram_we     (cpu_inst_we   ),
+    .inst_sram_wen    (cpu_inst_we   ),
     .inst_sram_addr   (cpu_inst_addr ),
     .inst_sram_wdata  (cpu_inst_wdata),
     .inst_sram_rdata  (cpu_inst_rdata),
     
     .data_sram_en     (cpu_data_en   ),
-    .data_sram_we     (cpu_data_we   ),
+    .data_sram_wen    (cpu_data_we   ),
     .data_sram_addr   (cpu_data_addr ),
     .data_sram_wdata  (cpu_data_wdata),
     .data_sram_rdata  (cpu_data_rdata),
 
     //debug
     .debug_wb_pc      (debug_wb_pc      ),
-    .debug_wb_rf_we   (debug_wb_rf_we   ),
+    .debug_wb_rf_wen  (debug_wb_rf_we   ),
     .debug_wb_rf_wnum (debug_wb_rf_wnum ),
     .debug_wb_rf_wdata(debug_wb_rf_wdata)
 );
