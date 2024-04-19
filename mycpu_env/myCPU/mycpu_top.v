@@ -36,9 +36,9 @@ wire [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus;
 wire [`MS_TO_WS_BUS_WD -1:0] ms_to_ws_bus;
 wire [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus;
 wire [`BR_BUS_WD       -1:0] br_bus;
-wire [4:0] es_dest;
-wire [4:0] ms_dest;
-wire [4:0] ws_dest;
+wire [                 37:0] es_to_ds_bus;
+wire [                 36:0] ms_to_ds_bus;
+wire [                 36:0] ws_to_ds_bus;
 
 
 // IF stage 取址
@@ -66,9 +66,10 @@ id_stage id_stage(
     //allowin
     .es_allowin     (es_allowin     ),
     .ds_allowin     (ds_allowin     ),
-    .es_dest        (es_dest        ),
-    .ms_dest        (ms_dest        ),
-    .ws_dest        (ws_dest        ),
+    // from later stage
+    .es_to_ds_bus   (es_to_ds_bus   ),
+    .ms_to_ds_bus   (ms_to_ds_bus   ),
+    .ws_to_ds_bus   (ws_to_ds_bus   ),
     //from fs
     .fs_to_ds_valid (fs_to_ds_valid ),
     .fs_to_ds_bus   (fs_to_ds_bus   ),
@@ -91,7 +92,7 @@ exe_stage exe_stage(
     .ds_to_es_valid (ds_to_es_valid ),
     .ds_to_es_bus   (ds_to_es_bus   ),
     //to ds: hazard
-    .es_dest        (es_dest        ),
+    .es_to_ds_bus   (es_to_ds_bus   ),
     //to ms
     .es_to_ms_valid (es_to_ms_valid ),
     .es_to_ms_bus   (es_to_ms_bus   ),
@@ -115,7 +116,7 @@ mem_stage mem_stage(
     .ms_to_ws_valid (ms_to_ws_valid ),
     .ms_to_ws_bus   (ms_to_ws_bus   ),
     //to ds: hazard
-    .ms_dest        (ms_dest        ),
+    .ms_to_ds_bus   (ms_to_ds_bus   ),
     //from data-sram
     .data_sram_rdata(data_sram_rdata)
 );
@@ -131,7 +132,7 @@ wb_stage wb_stage(
     //to rf: for write back
     .ws_to_rf_bus   (ws_to_rf_bus   ),
     //to ds: hazard
-    .ws_dest        (ws_dest        ),
+    .ws_to_ds_bus   (ws_to_ds_bus   ),
     //trace debug interface
     .debug_wb_pc      (debug_wb_pc      ),
     .debug_wb_rf_wen  (debug_wb_rf_wen  ),

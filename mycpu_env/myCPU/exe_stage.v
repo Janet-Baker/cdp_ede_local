@@ -10,7 +10,7 @@ module exe_stage(
     input                          ds_to_es_valid,
     input  [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus  ,
     //to ds: hazard
-    output [                  4:0] es_dest,
+    output [                 37:0] es_to_ds_bus  ,
     //to ms
     output                         es_to_ms_valid,
     output [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus  ,
@@ -64,6 +64,12 @@ assign es_to_ms_bus = {es_res_from_mem,  //70:70
                        es_alu_result  ,  //63:32
                        es_pc             //31:0
                       };
+
+assign es_to_ds_bus = {
+    es_res_from_mem, // 37:37
+    es_dest        , // 36:32
+    es_alu_result    // 31:0
+};
 
 assign es_dest = es_valid? es_dest_r : 5'bZZZZZ;
 

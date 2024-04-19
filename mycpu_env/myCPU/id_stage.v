@@ -7,11 +7,11 @@ module id_stage(
     input                          es_allowin    ,
     output                         ds_allowin    ,
     //from es
-    input  [                  4:0] es_dest       ,
+    input  [                 37:0] es_to_ds_bus  ,
     //from ms
-    input  [                  4:0] ms_dest       ,
+    input  [                 36:0] ms_to_ds_bus  ,
     //from ws
-    input  [                  4:0] ws_dest       ,
+    input  [                 36:0] ws_to_ds_bus  ,
     //from fs
     input                          fs_to_ds_valid,
     input  [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus  ,
@@ -42,10 +42,28 @@ assign {rf_we   ,  //37:37
         rf_wdata   //31:0
        } = ws_to_rf_bus;
 
-wire [ 4:0] es_dest;
-wire [ 4:0] ms_dest;
-wire [ 4:0] ws_dest;
-wire        is_hazard;
+wire [37:0] es_to_ds_bus   ;
+wire [36:0] ms_to_ds_bus   ;
+wire [36:0] ws_to_ds_bus   ;
+wire [31:0] es_alu_result  ;
+wire [31:0] ms_final_result;
+wire [31:0] ws_final_result;
+wire [ 4:0] es_dest        ;
+wire [ 4:0] ms_dest        ;
+wire [ 4:0] ws_dest        ;
+wire        es_res_from_mem;
+wire        is_hazard      ;
+
+assign {es_res_from_mem, // 37:37
+        es_dest        , // 36:32
+        es_alu_result    // 31:0
+       } = es_to_ds_bus;
+assign {ms_dest       , // 36:32
+        ms_final_result // 31:0
+       } = ms_to_ds_bus;
+assign {ws_dest       , // 36:32
+        ws_final_result // 31:0
+       } = ws_to_ds_bus;
 
 wire        br_taken;
 wire [31:0] br_target;
@@ -117,6 +135,19 @@ wire [ 4:0] rf_raddr2;
 wire [31:0] rf_rdata2;
 
 wire        rj_eq_rd;
+
+wire is_es_dest_eq_rj;
+wire is_ms_dest_eq_rj;
+wire is_ws_dest_eq_rj;
+wire is_rj_hazard;
+wire is_es_dest_eq_rk;
+wire is_ms_dest_eq_rk;
+wire is_ws_dest_eq_rk;
+wire is_rd_hazard;
+wire is_es_dest_eq_rd;
+wire is_ms_dest_eq_rd;
+wire is_ws_dest_eq_rd;
+wire is_rd_hazard;
 
 assign br_bus       = {br_taken,br_target};
 
@@ -216,12 +247,24 @@ assign src2_is_4  =  inst_jirl | inst_bl;
 // inst_lu12i_w | inst_b | inst_bl => no rj
 // inst_add_w | inst_sub_w | inst_slt | inst_sltu | inst_and | inst_nor | inst_or | inst_xor => rk
 // inst_bne | inst_beq | inst_st_w => rd
-assign is_hazard = ((~(inst_lu12i_w | inst_b | inst_bl)) & 
-                    ((es_dest === rj) | (ms_dest === rj) | (ws_dest === rj) |
-                     ((inst_add_w | inst_sub_w | inst_slt | inst_sltu | inst_and | inst_nor | inst_or | inst_xor) &
-                        ((es_dest === rf_raddr2) | (ms_dest === rf_raddr2) | (ws_dest === rf_raddr2))
-                     )                     
-                    )) | ((inst_bne | inst_beq | inst_st_w) & ((es_dest === rd) | (ms_dest === rd) | (ws_dest === rd)));
+
+assign is_es_dest_eq_rj = (es_dest === rj);
+assign is_ms_dest_eq_rj = (ms_dest === rj);
+assign is_ws_dest_eq_rj = (ws_dest === rj);
+assign is_rj_hazard = (~(inst_lu12i_w | inst_b | inst_bl)) & (is_es_dest_eq_rj | is_ms_dest_eq_rj | is_ws_dest_eq_rj);
+
+assign is_es_dest_eq_rk = (es_dest === rk);
+assign is_ms_dest_eq_rk = (ms_dest === rk);
+assign is_ws_dest_eq_rk = (ws_dest === rk);
+assign is_rk_hazard = (inst_add_w | inst_sub_w | inst_slt | inst_sltu | inst_and | inst_nor | inst_or | inst_xor) &
+                        (is_es_dest_eq_rk | is_ms_dest_eq_rk | is_ws_dest_eq_rk);
+
+assign is_es_dest_eq_rd = (es_dest === rd);
+assign is_ms_dest_eq_rd = (ms_dest === rd);
+assign is_ws_dest_eq_rd = (ws_dest === rd);
+assign is_rd_hazard = (inst_bne | inst_beq | inst_st_w) & (is_es_dest_eq_rd | is_ms_dest_eq_rd | is_ws_dest_eq_rd);
+
+assign is_hazard = es_res_from_mem & is_es_dest_eq_rj;
 
 assign ds_imm = src2_is_4 ? 32'h4                      :
                 need_si20 ? {i20[19:0], 12'b0}         :
@@ -254,7 +297,7 @@ assign mem_we        = inst_st_w;
 assign dest          = dst_is_r1 ? 5'd1 : rd;
 
 assign rf_raddr1 = rj;
-assign rf_raddr2 = src_reg_is_rd ? rd :rk;
+assign rf_raddr2 = src_reg_is_rd ? rd : rk;
 regfile u_regfile(
     .clk    (clk      ),
     .raddr1 (rf_raddr1),
@@ -267,8 +310,13 @@ regfile u_regfile(
     );
 
 
-assign rj_value  = rf_rdata1;
-assign rkd_value = rf_rdata2;
+assign rj_value  = is_rj_hazard  ? (is_ws_dest_eq_rj ? ws_final_result : (is_ms_dest_eq_rj ? ms_final_result : es_alu_result)) 
+                                 : rf_rdata1;
+assign rkd_value = (src_reg_is_rd ? is_rd_hazard : is_rj_hazard) ? 
+                    (src_reg_is_rd ? (is_ws_dest_eq_rd ? ws_final_result : (is_ms_dest_eq_rd ? ms_final_result : es_alu_result)) 
+                                   : (is_ws_dest_eq_rk ? ws_final_result : (is_ms_dest_eq_rk ? ms_final_result : es_alu_result)) 
+                    )
+                    : rf_rdata2;
 
 assign rj_eq_rd = (rj_value == rkd_value);
 assign br_taken = (   inst_beq  &&  rj_eq_rd
