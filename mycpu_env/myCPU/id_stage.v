@@ -310,12 +310,12 @@ regfile u_regfile(
     );
 
 
-assign rj_value  = is_rj_hazard  ? (is_ws_dest_eq_rj ? ws_final_result : (is_ms_dest_eq_rj ? ms_final_result : es_alu_result)) 
+assign rj_value  = is_rj_hazard  ? (is_es_dest_eq_rj ? es_alu_result : (is_ms_dest_eq_rj ? ms_final_result : ws_final_result)) 
                                  : rf_rdata1;
-assign rkd_value = (src_reg_is_rd ? is_rd_hazard : is_rj_hazard) ? 
-                    (src_reg_is_rd ? (is_ws_dest_eq_rd ? ws_final_result : (is_ms_dest_eq_rd ? ms_final_result : es_alu_result)) 
-                                   : (is_ws_dest_eq_rk ? ws_final_result : (is_ms_dest_eq_rk ? ms_final_result : es_alu_result)) 
-                    )
+assign rkd_value = (src_reg_is_rd ? is_rd_hazard : is_rk_hazard) ? 
+                    (src_reg_is_rd ? (is_ws_dest_eq_rd ? es_alu_result : (is_ms_dest_eq_rd ? ms_final_result : ws_final_result)) 
+                                   : (is_ws_dest_eq_rk ? es_alu_result : (is_ms_dest_eq_rk ? ms_final_result : ws_final_result)) 
+                    ) // 前递值
                     : rf_rdata2;
 
 assign rj_eq_rd = (rj_value == rkd_value);
