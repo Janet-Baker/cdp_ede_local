@@ -7,7 +7,7 @@ module id_stage(
     input                          es_allowin    ,
     output                         ds_allowin    ,
     //from es
-    input  [                 37:0] es_to_ds_bus  ,
+    input  [`ES_TO_DS_BUS_WD -1:0] es_to_ds_bus  ,
     //from ms
     input  [                 36:0] ms_to_ds_bus  ,
     //from ws
@@ -54,7 +54,8 @@ wire [ 4:0] ws_dest        ;
 wire        es_res_from_mem;
 wire        is_hazard      ;
 
-assign {es_res_from_mem, // 37:37
+assign {es_res_from_mem, // 38:38
+        es_mem_we      , // 37:37
         es_dest        , // 36:32
         es_alu_result    // 31:0
        } = es_to_ds_bus;
@@ -243,28 +244,28 @@ assign need_si20  =  inst_lu12i_w;
 assign need_si26  =  inst_b | inst_bl;
 assign src2_is_4  =  inst_jirl | inst_bl;
 
-// inst_b => no hazard
-// inst_lu12i_w | inst_b | inst_bl => no rj
+// inst_b | inst_lu12i_w => no hazard
+// inst_b | inst_bl => no rj
 // inst_add_w | inst_sub_w | inst_slt | inst_sltu | inst_and | inst_nor | inst_or | inst_xor => rk
 // inst_bne | inst_beq | inst_st_w => rd
 
-assign is_es_dest_eq_rj = (es_dest === rj);
-assign is_ms_dest_eq_rj = (ms_dest === rj);
-assign is_ws_dest_eq_rj = (ws_dest === rj);
-assign is_rj_hazard = (~(inst_lu12i_w | inst_b | inst_bl)) & (is_es_dest_eq_rj | is_ms_dest_eq_rj | is_ws_dest_eq_rj);
+assign is_es_dest_eq_rj = (es_dest === rj) && (rj != 5'd0);
+assign is_ms_dest_eq_rj = (ms_dest === rj) && (rj != 5'd0);
+assign is_ws_dest_eq_rj = (ws_dest === rj) && (rj != 5'd0);
+assign is_rj_hazard = (~(res_from_mem & es_mem_we)) & (~(inst_lu12i_w |inst_b | inst_bl)) & (is_es_dest_eq_rj | is_ms_dest_eq_rj | is_ws_dest_eq_rj);
 
-assign is_es_dest_eq_rk = (es_dest === rk);
-assign is_ms_dest_eq_rk = (ms_dest === rk);
-assign is_ws_dest_eq_rk = (ws_dest === rk);
+assign is_es_dest_eq_rk = (es_dest === rk) && (rk != 5'd0);
+assign is_ms_dest_eq_rk = (ms_dest === rk) && (rk != 5'd0);
+assign is_ws_dest_eq_rk = (ws_dest === rk) && (rk != 5'd0);
 assign is_rk_hazard = (inst_add_w | inst_sub_w | inst_slt | inst_sltu | inst_and | inst_nor | inst_or | inst_xor) &
                         (is_es_dest_eq_rk | is_ms_dest_eq_rk | is_ws_dest_eq_rk);
 
-assign is_es_dest_eq_rd = (es_dest === rd);
-assign is_ms_dest_eq_rd = (ms_dest === rd);
-assign is_ws_dest_eq_rd = (ws_dest === rd);
+assign is_es_dest_eq_rd = (es_dest === rd) && (rd != 5'd0);
+assign is_ms_dest_eq_rd = (ms_dest === rd) && (rd != 5'd0);
+assign is_ws_dest_eq_rd = (ws_dest === rd) && (rd != 5'd0);
 assign is_rd_hazard = (inst_bne | inst_beq | inst_st_w) & (is_es_dest_eq_rd | is_ms_dest_eq_rd | is_ws_dest_eq_rd);
 
-assign is_hazard = es_res_from_mem & is_es_dest_eq_rj;
+assign is_hazard = es_res_from_mem & ((is_es_dest_eq_rj & is_rj_hazard)|(is_es_dest_eq_rk & is_rk_hazard)|(is_es_dest_eq_rd & is_rd_hazard));
 
 assign ds_imm = src2_is_4 ? 32'h4                      :
                 need_si20 ? {i20[19:0], 12'b0}         :
@@ -310,11 +311,11 @@ regfile u_regfile(
     );
 
 
-assign rj_value  = is_rj_hazard  ? (is_es_dest_eq_rj ? es_alu_result : (is_ms_dest_eq_rj ? ms_final_result : ws_final_result)) 
+assign rj_value  = is_rj_hazard ? (is_es_dest_eq_rj ? es_alu_result : (is_ms_dest_eq_rj ? ms_final_result : ws_final_result)) 
                                  : rf_rdata1;
 assign rkd_value = (src_reg_is_rd ? is_rd_hazard : is_rk_hazard) ? 
-                    (src_reg_is_rd ? (is_ws_dest_eq_rd ? es_alu_result : (is_ms_dest_eq_rd ? ms_final_result : ws_final_result)) 
-                                   : (is_ws_dest_eq_rk ? es_alu_result : (is_ms_dest_eq_rk ? ms_final_result : ws_final_result)) 
+                    (src_reg_is_rd ? (is_es_dest_eq_rd ? es_alu_result : (is_ms_dest_eq_rd ? ms_final_result : ws_final_result)) 
+                                   : (is_es_dest_eq_rk ? es_alu_result : (is_ms_dest_eq_rk ? ms_final_result : ws_final_result)) 
                     ) // 前递值
                     : rf_rdata2;
 

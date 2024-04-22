@@ -48,7 +48,7 @@ assign ms_to_ds_bus = {
     ms_dest       , // 36:32
     ms_final_result // 31:0
 };
-assign ms_dest = ms_valid ? ms_dest_r : 5'bZZZZZ;
+assign ms_dest = ms_valid ? ms_dest_r : 5'b00000;
 assign ms_ready_go    = 1'b1;
 assign ms_allowin     = !ms_valid || ms_ready_go && ws_allowin;
 assign ms_to_ws_valid = ms_valid && ms_ready_go;

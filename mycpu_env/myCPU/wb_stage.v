@@ -46,7 +46,7 @@ assign ws_to_ds_bus = {
     ws_dest       , // 36:32
     ws_final_result // 31:0
 };
-assign ws_dest = ws_valid ? ws_dest_r : 5'bZZZZZ;
+assign ws_dest = ws_valid ? ws_dest_r : 5'b00000;
 assign ws_ready_go = 1'b1;
 assign ws_allowin  = !ws_valid || ws_ready_go;
 always @(posedge clk) begin
