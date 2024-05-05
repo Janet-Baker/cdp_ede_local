@@ -42,9 +42,9 @@ assign {rf_we   ,  //37:37
         rf_wdata   //31:0
        } = ws_to_rf_bus;
 
-wire [37:0] es_to_ds_bus   ;
-wire [36:0] ms_to_ds_bus   ;
-wire [36:0] ws_to_ds_bus   ;
+wire [`ES_TO_DS_BUS_WD -1:0] es_to_ds_bus;
+wire [`MS_TO_DS_BUS_WD -1:0] ms_to_ds_bus;
+wire [`WS_TO_DS_BUS_WD -1:0] ws_to_ds_bus;
 wire [31:0] es_alu_result  ;
 wire [31:0] ms_final_result;
 wire [31:0] ws_final_result;

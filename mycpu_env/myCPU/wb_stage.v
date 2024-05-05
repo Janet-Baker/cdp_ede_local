@@ -11,7 +11,7 @@ module wb_stage(
     //to rf: for write back
     output [`WS_TO_RF_BUS_WD -1:0]  ws_to_rf_bus  ,
     //to ds: hazard
-    output [36:0] ws_to_ds_bus                    ,
+    output [`WS_TO_DS_BUS_WD -1:0]  ws_to_ds_bus  ,
     //trace debug interface
     output [31:0] debug_wb_pc     ,
     output [ 3:0] debug_wb_rf_wen ,

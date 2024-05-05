@@ -13,7 +13,7 @@ module mem_stage(
     output                         ms_to_ws_valid,
     output [`MS_TO_WS_BUS_WD -1:0] ms_to_ws_bus  ,
     //to ds: hazard
-    output [                 36:0] ms_to_ds_bus  ,
+    output [`MS_TO_DS_BUS_WD -1:0] ms_to_ds_bus  ,
     //from data-sram
     input  [31                 :0] data_sram_rdata
 );

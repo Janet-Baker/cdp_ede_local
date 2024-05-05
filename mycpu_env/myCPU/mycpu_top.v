@@ -37,8 +37,8 @@ wire [`MS_TO_WS_BUS_WD -1:0] ms_to_ws_bus;
 wire [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus;
 wire [`BR_BUS_WD       -1:0] br_bus;
 wire [`ES_TO_DS_BUS_WD -1:0] es_to_ds_bus;
-wire [                 36:0] ms_to_ds_bus;
-wire [                 36:0] ws_to_ds_bus;
+wire [`MS_TO_DS_BUS_WD -1:0] ms_to_ds_bus;
+wire [`WS_TO_DS_BUS_WD -1:0] ws_to_ds_bus;
 
 
 // IF stage 取址
