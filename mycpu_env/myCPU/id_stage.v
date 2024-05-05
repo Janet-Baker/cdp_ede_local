@@ -51,18 +51,23 @@ wire [31:0] ws_final_result;
 wire [ 4:0] es_dest        ;
 wire [ 4:0] ms_dest        ;
 wire [ 4:0] ws_dest        ;
+wire        es_no_dest     ;
+wire        ms_no_dest     ;
+wire        ws_no_dest     ;
 wire        es_res_from_mem;
 wire        is_hazard      ;
 
 assign {es_res_from_mem, // 38:38
-        es_mem_we      , // 37:37
+        es_no_dest     , // 37:37
         es_dest        , // 36:32
         es_alu_result    // 31:0
        } = es_to_ds_bus;
-assign {ms_dest       , // 36:32
+assign {ms_no_dest     , // 37:37
+        ms_dest        , // 36:32
         ms_final_result // 31:0
        } = ms_to_ds_bus;
-assign {ws_dest       , // 36:32
+assign {ws_no_dest     , // 37:37
+        ws_dest        , // 36:32
         ws_final_result // 31:0
        } = ws_to_ds_bus;
 
@@ -152,12 +157,13 @@ wire is_rd_hazard;
 
 assign br_bus       = {br_taken,br_target};
 
-assign ds_to_es_bus = {alu_op      ,  //149:138
-                       res_from_mem,  //137:137
-                       src1_is_pc  ,  //136:136
-                       src2_is_imm ,  //135:135
-                       gr_we       ,  //134:134
-                       mem_we      ,  //133:133
+assign ds_to_es_bus = {alu_op      ,  //150:139
+                       res_from_mem,  //138:138
+                       src1_is_pc  ,  //137:137
+                       src2_is_imm ,  //136:136
+                       gr_we       ,  //135:135
+                       mem_we      ,  //134:134
+                       no_dest     ,  //133:133
                        dest        ,  //132:128
                        ds_imm      ,  //127:96
                        rj_value    ,  //95 :64
@@ -249,20 +255,21 @@ assign src2_is_4  =  inst_jirl | inst_bl;
 // inst_add_w | inst_sub_w | inst_slt | inst_sltu | inst_and | inst_nor | inst_or | inst_xor => rk
 // inst_bne | inst_beq | inst_st_w => rd
 
-assign is_es_dest_eq_rj = (es_dest === rj) && (rj != 5'd0);
-assign is_ms_dest_eq_rj = (ms_dest === rj) && (rj != 5'd0);
-assign is_ws_dest_eq_rj = (ws_dest === rj) && (rj != 5'd0);
-assign is_rj_hazard = (~(res_from_mem & es_mem_we)) & (~(inst_lu12i_w |inst_b | inst_bl)) & (is_es_dest_eq_rj | is_ms_dest_eq_rj | is_ws_dest_eq_rj);
+assign is_es_dest_eq_rj = (~(res_from_mem & es_no_dest)) && (es_dest === rj) && (rj != 5'd0);
+assign is_ms_dest_eq_rj = (~ms_no_dest) && (ms_dest === rj) && (rj != 5'd0);
+assign is_ws_dest_eq_rj = (~ws_no_dest) && (ws_dest === rj) && (rj != 5'd0);
+assign is_rj_hazard = (~(inst_lu12i_w |inst_b | inst_bl)) & (is_es_dest_eq_rj | is_ms_dest_eq_rj | is_ws_dest_eq_rj);
 
-assign is_es_dest_eq_rk = (es_dest === rk) && (rk != 5'd0);
-assign is_ms_dest_eq_rk = (ms_dest === rk) && (rk != 5'd0);
-assign is_ws_dest_eq_rk = (ws_dest === rk) && (rk != 5'd0);
+assign is_es_dest_eq_rk = (~es_no_dest) && (es_dest === rk) && (rk != 5'd0);
+assign is_ms_dest_eq_rk = (~ms_no_dest) && (ms_dest === rk) && (rk != 5'd0);
+assign is_ws_dest_eq_rk = (~ws_no_dest) && (ws_dest === rk) && (rk != 5'd0);
 assign is_rk_hazard = (inst_add_w | inst_sub_w | inst_slt | inst_sltu | inst_and | inst_nor | inst_or | inst_xor) &
                         (is_es_dest_eq_rk | is_ms_dest_eq_rk | is_ws_dest_eq_rk);
 
-assign is_es_dest_eq_rd = (es_dest === rd) && (rd != 5'd0);
-assign is_ms_dest_eq_rd = (ms_dest === rd) && (rd != 5'd0);
-assign is_ws_dest_eq_rd = (ws_dest === rd) && (rd != 5'd0);
+assign no_dest = inst_b | inst_bne | inst_beq | inst_st_w;
+assign is_es_dest_eq_rd = (~es_no_dest) && (es_dest === dest) && (rd != 5'd0);
+assign is_ms_dest_eq_rd = (~ms_no_dest) && (ms_dest === dest) && (rd != 5'd0);
+assign is_ws_dest_eq_rd = (~ws_no_dest) && (ws_dest === dest) && (rd != 5'd0);
 assign is_rd_hazard = (inst_bne | inst_beq | inst_st_w) & (is_es_dest_eq_rd | is_ms_dest_eq_rd | is_ws_dest_eq_rd);
 
 assign is_hazard = es_res_from_mem & ((is_es_dest_eq_rj & is_rj_hazard)|(is_es_dest_eq_rk & is_rk_hazard)|(is_es_dest_eq_rd & is_rd_hazard));
@@ -298,7 +305,7 @@ assign mem_we        = inst_st_w;
 assign dest          = dst_is_r1 ? 5'd1 : rd;
 
 assign rf_raddr1 = rj;
-assign rf_raddr2 = src_reg_is_rd ? rd : rk;
+assign rf_raddr2 = src_reg_is_rd ? dest : rk;
 regfile u_regfile(
     .clk    (clk      ),
     .raddr1 (rf_raddr1),

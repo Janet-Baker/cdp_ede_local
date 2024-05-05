@@ -28,7 +28,9 @@ wire [ 4:0] ws_dest_r;
 wire [ 4:0] ws_dest  ;
 wire [31:0] ws_final_result;
 wire [31:0] ws_pc;
-assign {ws_gr_we       ,  //69:69
+wire ws_no_dest;
+assign {ws_no_dest     ,  //70:70
+        ws_gr_we       ,  //69:69
         ws_dest_r      ,  //68:64
         ws_final_result,  //63:32
         ws_pc             //31:0

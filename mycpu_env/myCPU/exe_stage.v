@@ -39,12 +39,13 @@ wire [31:0] es_pc         ;
 
 wire        es_res_from_mem;
 
-assign {es_alu_op      ,  //149:138
-        es_res_from_mem,  //137:137
-        es_src1_is_pc  ,  //136:136
-        es_src2_is_imm ,  //135:135
-        es_gr_we       ,  //134:134
-        es_mem_we      ,  //133:133
+assign {es_alu_op      ,  //150:139
+        es_res_from_mem,  //138:138
+        es_src1_is_pc  ,  //137:137
+        es_src2_is_imm ,  //136:136
+        es_gr_we       ,  //135:135
+        es_mem_we      ,  //134:134
+        es_no_dest     ,  //133:133
         es_dest_r      ,  //132:128
         es_imm         ,  //127:96
         es_rj_value    ,  //95 :64
@@ -57,8 +58,10 @@ wire [31:0] es_alu_src2   ;
 wire [31:0] es_alu_result ;
 
 //assign es_res_from_mem = es_load_op;
+wire es_no_dest;
 // 传递给下一级
-assign es_to_ms_bus = {es_res_from_mem,  //70:70
+assign es_to_ms_bus = {es_no_dest     ,  //71:71
+                       es_res_from_mem,  //70:70
                        es_gr_we       ,  //69:69
                        es_dest        ,  //68:64
                        es_alu_result  ,  //63:32
@@ -67,7 +70,7 @@ assign es_to_ms_bus = {es_res_from_mem,  //70:70
 
 assign es_to_ds_bus = {
     es_res_from_mem, // 38:38
-    es_mem_we      , // 37:37
+    es_no_dest     , // 37:37
     es_dest        , // 36:32
     es_alu_result    // 31:0
 };
